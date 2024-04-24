@@ -3,6 +3,8 @@ const { hashPassword, passwordMatched } = require('../../../utils/password');
 
 /**
  * Get list of users
+ * @param
+ * @param {string} search - Search options
  * @returns {Array}
  */
 async function getUsers({ page_number, page_size, search, sort }) {
@@ -12,8 +14,8 @@ async function getUsers({ page_number, page_size, search, sort }) {
 
   // make the search function
   if (search) {
-    const [searchField, searchTerm] = search.split(':');
-    query[searchField] = { $regex: new RegExp(searchTerm, 'i') };
+    const [searchField, searchKey] = search.split(':');
+    query[searchField] = { $regex: new RegExp(searchKey, 'i') };
   }
 
   // Apply sorting function
