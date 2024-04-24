@@ -5,20 +5,71 @@ const { hashPassword, passwordMatched } = require('../../../utils/password');
  * Get list of users
  * @returns {Array}
  */
-async function getUsers() {
-  const users = await usersRepository.getUsers();
+async function getUsers({ page_number, page_size, search, sort }) {
+  let query = {};
 
-  const results = [];
+  let users = await usersRepository.getUsers();
+
+  // make the search function
+  if (search) {
+    const [searchField, searchTerm] = search.split(':');
+    query[searchField] = { $regex: new RegExp(searchTerm, 'i') };
+  }
+
+  // Apply sorting function
+  let sortOptions = {};
+  if (sort) {
+    const [sortField, sortOrder] = sort.split(':');
+    sortOptions[sortField] = sortOrder === 'asc' ? 1 : -1;
+  }
+
+  if (Object.keys(sortOptions).length !== 0) {
+    const sortField = Object.keys(sortOptions)[0]; // Get sortField directly
+    const sortOrder = sortOptions[sortField] === 1 ? 'asc' : 'desc';
+
+    users.sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      return sortOrder === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    });
+  }
+
+  //count all the users
+  const count = users.length;
+
+  //calculate total pages
+  const total_pages = Math.ceil(count / page_size);
+
+  //Check if there is a previous page
+  const has_previous_page = page_number > 1;
+
+  //Check if there is a next page
+  const has_next_page = page_number < total_pages;
+
+  //apply the pagination
+  users = users.slice((page_number - 1) * page_size, page_number * page_size);
+
+  const data = [];
   for (let i = 0; i < users.length; i += 1) {
     const user = users[i];
-    results.push({
+    data.push({
       id: user.id,
       name: user.name,
       email: user.email,
     });
   }
 
-  return results;
+  return {
+    page_number: parseInt(page_number),
+    page_size: parseInt(page_size),
+    count: data.length,
+    total_pages,
+    has_previous_page,
+    has_next_page,
+    data,
+  };
 }
 
 /**
