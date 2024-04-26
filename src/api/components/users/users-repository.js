@@ -38,7 +38,7 @@ async function getUsers({ page_number, page_size, query, sortOptions }) {
   for (let i = 0; i < users.length; i += 1) {
     const user = users[i];
     data.push({
-      id: user.id,
+      id: user._id,
       name: user.name,
       email: user.email,
     });
